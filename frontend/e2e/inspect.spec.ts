@@ -1,7 +1,8 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 const model = execFileSync(
   "uv",
@@ -49,7 +50,7 @@ test("real ONNX bytes produce exact identity, accessible inventory, and unevalua
   await expect(
     page.getByRole("heading", { name: "Edge AI Comparator", exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole("checkbox")).toHaveCount(3);
+  await expect(page.getByRole("checkbox")).toHaveCount(4);
   expect(await upload(page)).toBe(200);
   await expect(page.getByText(sha256, { exact: true })).toBeVisible();
   await expect(page.getByText("Static inferred / preflight", { exact: true })).toBeVisible();
@@ -64,7 +65,7 @@ test("real ONNX bytes produce exact identity, accessible inventory, and unevalua
     .analyze();
   expect(accessibility.violations).toEqual([]);
 
-  await page.getByRole("checkbox", { name: /Intel/ }).uncheck();
+  await page.getByRole("checkbox", { name: /Local CPU via OpenVINO/ }).uncheck();
   await expect(matrix.getByRole("cell", { name: "Not tested", exact: true })).toHaveCount(2);
   await page.getByRole("button", { name: "Deselect All", exact: true }).click();
   await expect(page.getByText("No targets selected to display in matrix.")).toBeVisible();
