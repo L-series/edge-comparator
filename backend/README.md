@@ -112,6 +112,6 @@ uv run --frozen mypy src tests
 # Test suite with branch coverage >= 90%, JUnit XML and Coverage XML reports
 uv run --frozen pytest
 
-# Hermetic package build check
+# Package build check
 uv build --no-sources
 ```

@@ -49,6 +49,21 @@ uv build --no-sources
 See [backend setup and limitations](backend/README.md). Use generated test
 models, never private or untrusted uploads, in CI.
 
+Frontend checks and the real browser/API flow:
+
+```sh
+npm --prefix frontend ci --ignore-scripts --no-audit --no-fund
+npm --prefix frontend run check
+npm --prefix frontend exec -- playwright install chromium
+npm --prefix frontend run test:e2e
+```
+
+Browser tests start their own loopback API and Vite servers; ports 8000 and 5173
+must be free. They generate a tiny ONNX model, verify the exact uploaded-byte hash,
+exercise failure/recovery and target filtering, and check WCAG accessibility with
+axe. The local CI image includes matching browser binaries and OS libraries;
+hosted PRs install the pinned browser and also verify both Docker recipes.
+
 ## Architecture decision records
 
 Follow the [decision log](docs/decisions/README.md) and its template, based on

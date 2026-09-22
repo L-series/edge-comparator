@@ -31,6 +31,7 @@ Review image updates and build the digest-pinned recipe before registration:
 docker build -f ci/runner.Dockerfile -t edge-comparator-runner:local .
 docker run -d --name edge-comparator-ci --restart unless-stopped --init \
   --cpus 2 --memory 4g --pids-limit 512 --shm-size 512m \
+  --log-opt max-size=10m --log-opt max-file=3 \
   --cap-drop ALL --security-opt no-new-privileges \
   edge-comparator-runner:local
 gh api --method POST repos/L-series/edge-comparator/actions/runners/registration-token \
@@ -68,3 +69,12 @@ The smaller `ci/Dockerfile` is an offline repository-tooling check environment,
 not the complete application runner or an untrusted-model worker. Both recipes
 use the same digest-pinned Node release. The runner additionally pins GitHub's
 runner base, uv, Hadolint, and actionlint images.
+
+The browser-capable runner uses Microsoft's digest-pinned Playwright Ubuntu image
+for browser binaries and native dependencies, rather than installing unpinned
+system packages during local jobs. The recipe copies GitHub's pinned runner and
+the pinned Node/tool binaries into that base and runs as a dedicated nonroot user.
+The Playwright npm version and image version must move together; governance tests
+reject drift. This larger development image is not an application deployment image.
+Hosted PRs additionally build and exercise both Docker recipes without access to
+this machine's Docker socket.
