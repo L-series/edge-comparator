@@ -1,0 +1,25 @@
+{
+  "name": "hw-comparator-development",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <27"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings 0 && markdownlint-cli2 && node tools/check-repository.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "pretest:ci": "node --input-type=module -e \"import { mkdirSync } from 'node:fs'; mkdirSync('reports', { recursive: true });\"",
+    "test:ci": "node --test --experimental-test-coverage --test-coverage-include=tools/*.mjs --test-coverage-lines=95 --test-coverage-branches=90 --test-coverage-functions=100 --test-reporter=spec --test-reporter=junit --test-reporter-destination=stdout --test-reporter-destination=reports/unit.xml tests/*.test.mjs",
+    "check": "npm run format:check && npm run lint && npm run test:ci"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.11.0",
+    "markdownlint-cli2": "0.23.3",
+    "prettier": "3.9.8",
+    "yaml": "2.9.1"
+  }
+}

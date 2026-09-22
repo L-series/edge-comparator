@@ -1,0 +1,17 @@
+.git
+.vscode
+node_modules
+.npm
+reports
+coverage
+.venv
+**/__pycache__
+.env
+.env.*
+**/*.onnx
+**/*.tflite
+**/*.engine
+**/*.hef
+**/*.har
+**/*.whl
+**/*.deb

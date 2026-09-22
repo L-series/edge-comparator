@@ -1,0 +1,9 @@
+node_modules/
+.npm/
+reports/
+coverage/
+__pycache__/
+.venv/
+.env
+.env.*
+!.env.example

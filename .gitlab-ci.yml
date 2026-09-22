@@ -1,0 +1,33 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - if: "$CI_COMMIT_BRANCH || $CI_COMMIT_TAG"
+
+stages:
+  - verify
+
+default:
+  image: node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+  interruptible: true
+  timeout: 10 minutes
+
+quality:
+  stage: verify
+  script:
+    - npm ci --ignore-scripts --no-audit --no-fund
+    - npm run check
+  artifacts:
+    when: always
+    expire_in: 14 days
+    reports:
+      junit: reports/unit.xml
+
+dockerfile-lint:
+  stage: verify
+  image:
+    name: hadolint/hadolint:v2.14.0-debian@sha256:158cd0184dcaa18bd8ec20b61f4c1cabdf8b32a592d062f57bdcb8e4c1d312e2
+    entrypoint: [""]
+  script:
+    - hadolint ci/Dockerfile
