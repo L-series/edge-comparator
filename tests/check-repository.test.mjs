@@ -98,6 +98,15 @@ test("blocks application code until its language-specific gates are implemented"
       "tools/check-repository.mjs",
       "tests/check-repository.test.mjs",
       "eslint.config.mjs",
+      "backend/src/edge_comparator/api.py",
+      "backend/tests/test_api.py",
+      "frontend/src/App.tsx",
+      "frontend/src/style.css",
+      "frontend/index.html",
+      "frontend/vite.config.ts",
+      "frontend/playwright.config.ts",
+      "frontend/eslint.config.mjs",
+      "frontend/e2e/inspect.spec.ts",
     ]),
     [],
   );
@@ -119,8 +128,75 @@ test("blocks application code until its language-specific gates are implemented"
   }
 });
 
+test("requires actual backend and frontend CI gates before accepting application sources", (t) => {
+  const { root, write } = fixture(t);
+  write("backend/src/edge_comparator/api.py", "# API\n");
+  write("frontend/src/App.tsx", "// UI\n");
+  assert.ok(checkRepository(root).some((error) => error.includes("Backend CI")));
+  assert.ok(checkRepository(root).some((error) => error.includes("Frontend CI")));
+  for (const path of [
+    "backend/pyproject.toml",
+    "backend/uv.lock",
+    "frontend/package.json",
+    "frontend/package-lock.json",
+  ]) {
+    write(path, "{}");
+  }
+  const steps = `
+      - working-directory: backend
+        run: |
+          uv sync --frozen --all-groups
+          uv run --frozen ruff check .
+          uv run --frozen ruff format --check .
+          uv run --frozen mypy src tests
+          uv run --frozen pytest
+          uv build --no-sources
+      - run: npm --prefix frontend ci --ignore-scripts --no-audit --no-fund
+      - run: npm --prefix frontend run check
+`;
+  write(".github/workflows/ci.yml", pipeline + steps);
+  assert.deepEqual(checkRepository(root), []);
+  write(
+    ".github/workflows/ci.yml",
+    pipeline + steps.replace("uv run --frozen pytest", "echo skipped"),
+  );
+  assert.ok(checkRepository(root).some((error) => error.includes("Backend CI")));
+  write(
+    ".github/workflows/ci.yml",
+    pipeline +
+      steps.replace(
+        "      - run: npm --prefix frontend run check",
+        "      - if: false\n        run: npm --prefix frontend run check",
+      ),
+  );
+  assert.ok(checkRepository(root).some((error) => error.includes("Frontend CI")));
+});
+
 const image = `node:24-bookworm-slim@sha256:${"a".repeat(64)}`;
-const pipeline = `default:\n  image: ${image}\nquality:\n  script:\n    - npm run check\n`;
+const runner =
+  "${{ github.event_name == 'pull_request' && 'ubuntu-24.04' || 'edge-comparator-local' }}";
+const condition =
+  "${{ github.repository == 'L-series/edge-comparator' && (github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && github.actor == github.repository_owner)) }}";
+const pipeline = `name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quality:
+    if: ${condition}
+    runs-on: ${runner}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@${"a".repeat(40)}
+        with:
+          persist-credentials: false
+      - run: npm run check
+`;
 
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), "hw-comparator-governance-"));
@@ -130,11 +206,12 @@ function fixture(t) {
     writeFileSync(join(root, path), content);
   }
   write("docs/decisions/0001-record-decisions.md", adr);
-  write(".gitlab-ci.yml", pipeline);
+  write(".github/workflows/ci.yml", pipeline);
   write("ci/Dockerfile", `FROM ${image}\n`);
+  write("ci/runner.Dockerfile", `FROM ${image} AS node\n`);
   write("AGENTS.md", "# Instructions\n");
   write("CONTRIBUTING.md", "# Contributing\n");
-  write(".gitlab/merge_request_templates/Default.md", "# MR\n");
+  write(".github/pull_request_template.md", "# PR\n");
   for (const name of agentNames) {
     write(
       `.github/agents/${name}.agent.md`,
@@ -171,20 +248,54 @@ test("rejects duplicate decision numbers and unwired application code", (t) => {
   assert.ok(errors.some((error) => error.includes("language-specific lint")));
 });
 
-test("rejects invalid pipeline YAML, mutable images, environment drift, and weakened jobs", (t) => {
+test("rejects unsafe triggers, runner routing, tokens, actions, and weakened CI jobs", (t) => {
   const { root, write } = fixture(t);
   for (const invalid of [
     "quality: [",
-    pipeline.replace(image, "node:latest"),
-    pipeline.replace(image, image.replace(/a{64}$/, "b".repeat(64))),
+    pipeline.replace("pull_request:", "pull_request_target:"),
+    pipeline.replace("[main]", "[other]"),
+    pipeline.replace(runner, "self-hosted"),
+    pipeline.replace(condition, "always()"),
+    pipeline.replace("contents: read", "contents: write"),
+    pipeline.replace("a".repeat(40), "v4"),
+    pipeline.replace("persist-credentials: false", "persist-credentials: true"),
     pipeline.replace("npm run check", "echo skipped"),
-    pipeline.replace("script:\n    - npm run check", "script: echo npm run check"),
-    `${pipeline}  allow_failure: true\n`,
+    pipeline.replace("npm run check", "echo npm run check"),
+    `${pipeline}        continue-on-error: true\n`,
+    `${pipeline}        if: false\n`,
+    pipeline.replace("    steps:", "    continue-on-error: true\n    steps:"),
+    pipeline.replace("timeout-minutes: 20", "timeout-minutes: 360"),
+    pipeline.replace("timeout-minutes: 20", "timeout-minutes: 0"),
+    pipeline.replace(/ {4}steps:[\s\S]+/, "    steps: invalid\n"),
+    pipeline.replace(/ {4}steps:[\s\S]+/, "    steps: [null, 42]\n"),
+    `${pipeline}  another-job:\n    runs-on: self-hosted\n`,
     "null\n",
   ]) {
-    write(".gitlab-ci.yml", invalid);
+    write(".github/workflows/ci.yml", invalid);
     assert.ok(checkRepository(root).length > 0, invalid);
   }
+});
+
+test("rejects unexpected workflows rather than letting them bypass runner policy", (t) => {
+  const { root, write } = fixture(t);
+  write(".github/workflows/unreviewed.yml", "on: pull_request\n");
+  assert.ok(checkRepository(root).some((error) => error.includes("Unreviewed workflow")));
+});
+
+test("requires digest-pinned Docker bases and matching local and runner Node versions", (t) => {
+  const { root, write } = fixture(t);
+  for (const invalid of [
+    "# No base image\n",
+    "FROM node:latest\n",
+    `FROM ${image.replace(/a{64}$/, "b".repeat(64))} AS node\n`,
+    `FROM ${image} AS node\nFROM ubuntu:latest\n`,
+  ]) {
+    write("ci/runner.Dockerfile", invalid);
+    assert.ok(checkRepository(root).length > 0, invalid);
+  }
+  write("ci/runner.Dockerfile", `FROM ${image} AS node\n`);
+  write("ci/Dockerfile", "FROM node:latest\n");
+  assert.ok(checkRepository(root).length > 0);
 });
 
 test("CLI fails closed for invalid repositories and succeeds for valid ones", (t) => {

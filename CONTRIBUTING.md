@@ -24,7 +24,7 @@ docker build -f ci/Dockerfile -t hw-comparator-quality .
 docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges hw-comparator-quality
 ```
 
-Lint the Dockerfile with the image pinned in `.gitlab-ci.yml`:
+Lint the Dockerfile with the image pinned in `.github/workflows/ci.yml`:
 
 ```sh
 docker run --rm -i --network none hadolint/hadolint:v2.14.0-debian@sha256:158cd0184dcaa18bd8ec20b61f4c1cabdf8b32a592d062f57bdcb8e4c1d312e2 < ci/Dockerfile
@@ -41,7 +41,7 @@ Significant choices need an ADR before implementation: service boundaries,
 formats/evidence contracts, storage, scheduling, isolation/tenancy, public APIs,
 deployment, and SDK integration/licensing modes.
 
-Reference the accepted ADR in the MR. When no new decision is needed, explain why
+Reference the accepted ADR in the PR. When no new decision is needed, explain why
 or cite the existing ADR. Preserve accepted rationale; use dated amendments or a
 superseding record rather than rewriting history. Structural CI checks cannot
 decide whether a design is sound or whether a change deserved an ADR: independent
@@ -62,7 +62,7 @@ not artificial application tests.
 
 The bootstrap gate deliberately rejects application source languages that are not
 yet wired into CI. Introducing a stack requires updating that gate **and** adding
-working lint/format/type/build/test jobs in the same MR, under an accepted ADR.
+working lint/format/type/build/test jobs in the same PR, under a recorded ADR.
 Do not remove the guard without replacing it with real checks.
 
 | Stack when adopted         | Required gates                                                                                                                                                                                                       |
@@ -79,16 +79,19 @@ all new behavior to be exercised; coverage percentage alone is not proof of TDD.
 Do not use "pass with no tests", blanket exclusions, or snapshots as the sole
 assertion. A failing test must be fixed, not removed to make CI green.
 
-## GitLab CI/CD policy
+## GitHub Actions CI/CD policy
 
-Run blocking checks on merge requests, branch pushes without an open MR, the
-default branch, tags, and scheduled/manual branch pipelines. Avoid duplicate
-push and MR pipelines. The initial pipeline runs repository quality and Dockerfile
-lint; it does not pretend to test or deploy an application that does not exist.
+Blocking checks run on PRs targeting `main` on GitHub-hosted `ubuntu-24.04`.
+Trusted repository-owner pushes to `main` and owner-triggered manual runs on
+`main` use the `edge-comparator-local` runner on the owner's machine. There is no
+`pull_request_target`, release, or deployment workflow. The local runner is an
+unprivileged, resource-limited Docker container without host mounts or the Docker
+socket. See [runner operations](ci/README.md) and ADR-0004.
 
-Update CI in the same MR whenever checks, dependencies, package layouts, SDK
+Update CI in the same PR whenever checks, dependencies, package layouts, SDK
 images, or deployment behavior change. Pin tool versions and image digests;
-commit lockfiles. Dependency refreshes use dedicated MRs and full regression
+pin actions to full commit SHAs and commit lockfiles. Dependency refreshes use
+dedicated PRs and full regression
 checks. Never autoformat and commit from CI, mask failures, or rely on a developer's
 global packages. JUnit artifacts are retained for 14 days; no private models or
 secrets may enter reports.
@@ -97,30 +100,39 @@ When the first deployable service exists, add build-once/promotion-by-digest,
 SBOM/vulnerability/license gates, staging smoke tests, migration checks, protected
 production approval, serialized deployments, health checks, and tested rollback
 in the same delivery work. Use short-lived credentials and least-privilege runners.
-Fork/untrusted MR pipelines must not receive production secrets or privileged
+Fork/untrusted PR pipelines must not receive production secrets or privileged
 hardware. Hardware-in-the-loop jobs use dedicated, exclusively leased runners.
 No placeholder deploy job or fake successful scan is acceptable.
 
-### Required GitLab project settings
+### Required GitHub repository settings
 
 The following are server-side controls, **not enabled by committing this file**.
 An authorized maintainer must configure and verify them when the remote exists:
 
-- Protect the default/release branches; disable direct pushes and force pushes.
-- Require a successful pipeline and resolved discussions before merging; do not
-  allow skipped pipelines to satisfy the merge check.
-- Require an independent approval, and architecture-owner review for significant
-  decisions; prevent author/self approval where the GitLab tier supports it.
+- Protect `main` against force pushes and deletion, and require the `quality`
+  status check with up-to-date branches and resolved conversations. Apply these
+  controls to administrators after bootstrap; subsequent contributions use PRs.
+- Require independent approval and architecture-owner review for significant
+  decisions. A sole owner cannot supply independent human review; keep that
+  limitation explicit rather than inventing an approver.
 - Restrict CI configuration, dependency/image, security, and ADR-policy changes
-  to the relevant maintainers. Add CODEOWNERS once real GitLab owners are known.
-- Use merged-result pipelines/merge trains when available and appropriate.
+  to maintainers. CODEOWNERS identifies the actual repository owner.
+- Set Actions token defaults to read-only, disable Actions PR approvals, require
+  full SHA pins, and require approval from **all** external contributors.
+- Only GitHub-owned actions and the explicitly reviewed `astral-sh/setup-uv`
+  action are allowed. Never approve a fork workflow routing onto the local runner.
 - Protect release tags, environments, secrets, and deployment runners. Keep
-  secrets unavailable to untrusted merge requests.
-- Verify the pipeline using the target GitLab instance's CI Lint and an actual MR.
+  secrets unavailable to untrusted pull requests.
+- Verify actual workflow runs on both runner routes, not only local YAML syntax.
 
-Do not invent GitLab usernames or claim project settings are active without access.
-If the GitLab tier lacks a required approval feature, document and enforce a
-maintainer-controlled merge procedure rather than pretending the template enforces it.
+Public self-hosted runners remain risky: a contributor can modify workflow YAML.
+Routing expressions and labels are not a security boundary. Review fork workflows
+before approval; revoke the runner if trust cannot be maintained. A container does
+not provide VM-strength isolation or prohibit access to the host's network.
+
+Do not claim server settings are active without reading them back through GitHub.
+Use small, logically contained commits with detailed rationale, scope, and
+verification in commit bodies. Do not add Copilot co-author trailers.
 
 ## Agents and skills
 

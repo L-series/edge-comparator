@@ -1,8 +1,16 @@
 # ADR-0003: Enforce test-driven quality gates
 
-Status: Accepted
+Status: Superseded
 
 Date: 2026-09-22
+
+Supersession (2026-09-22): [ADR-0004](0004-use-github-actions-with-an-isolated-local-runner.md)
+replaces the GitLab CI-host choice with GitHub Actions at the user's explicit
+request. It retains this record's TDD, formatting, linting, typing, meaningful
+tests, and same-change language-gate principles. The original decision and
+rationale below are preserved as history; references to GitLab and MRs are not
+instructions to maintain a second CI platform. GitHub's hosted-PR/local-main
+routing and pre-merge enforcement requirements are defined in ADR-0004.
 
 ## Context
 

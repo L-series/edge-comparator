@@ -16,5 +16,5 @@ currency, quantity, region, seller, and timestamp; missing data is unknown, not 
 Preserve benchmark model/protocol/environment identity and corrections. Never
 transfer results to a related board or translate theoretical TOPS into latency.
 Label vendor/community claims distinctly. Write failing ingestion/schema tests
-before automation and update GitLab checks with schema changes. Escalate new data
+before automation and update GitHub Actions checks with schema changes. Escalate new data
 contracts through ADRs; return provenance and reviewable corrections.

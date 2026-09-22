@@ -4,6 +4,13 @@ Status: Accepted
 
 Date: 2026-09-22
 
+Amendment (2026-09-22): [ADR-0004](0004-use-github-actions-with-an-isolated-local-runner.md)
+replaces this record's historical GitLab host references with GitHub. The ADR
+workflow and human-review requirements remain in force. The user has separately
+authorized only the reversible discovery scope of Proposed
+[ADR-0005](0005-prototype-local-onnx-preflight.md); production adoption remains
+subject to human approval.
+
 ## Context
 
 hw-comparator begins with a research-backed plan, not an implemented application.

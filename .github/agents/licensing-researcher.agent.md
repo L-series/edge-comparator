@@ -18,4 +18,4 @@ Record sources, exact terms, dates, permitted deployment modes, and unknowns.
 Request human legal approval for ambiguous rights; do not accept EULAs, contact
 vendors, upload private models, or declare legal clearance autonomously.
 Escalate deployment-mode changes through ADRs. If implementing license automation,
-write failing tests first and update strict GitLab checks in the same MR.
+write failing tests first and update strict GitHub Actions checks in the same PR.

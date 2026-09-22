@@ -15,3 +15,15 @@ coverage
 **/*.har
 **/*.whl
 **/*.deb
+.runner
+.credentials*
+_diag
+_work
+dist
+**/.mypy_cache
+**/.ruff_cache
+**/.pytest_cache
+**/*.egg-info
+**/.coverage
+**/test-results
+**/playwright-report

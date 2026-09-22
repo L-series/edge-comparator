@@ -4,6 +4,13 @@ Status: Accepted
 
 Date: 2026-09-22
 
+Amendment (2026-09-22): [ADR-0004](0004-use-github-actions-with-an-isolated-local-runner.md)
+replaces the historical GitLab host references with GitHub Actions and specifies
+the local runner's container restrictions. Docker/OCI packaging and SDK approval
+requirements remain unchanged. The separately authorized local discovery work
+in [ADR-0005](0005-prototype-local-onnx-preflight.md) adds no vendor SDK image or
+production deployment.
+
 ## Context
 
 Developers and GitLab CI need a shared, inspectable toolchain without selecting

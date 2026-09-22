@@ -33,7 +33,7 @@ that should trigger reconsideration.
 Specify commands, test cases, experiment artifacts, and measurable acceptance
 criteria. Distinguish checks already run from future gates. For pending work,
 identify the responsible role and the merge or deployment condition it blocks.
-For behavior changes, link the MR's red/green/refactor evidence.
+For behavior changes, link the PR's red/green/refactor evidence.
 
 ## References
 

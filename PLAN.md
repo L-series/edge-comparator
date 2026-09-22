@@ -786,17 +786,22 @@ accessibility, typing, or tests.
 
 Every backend feature, frontend component, adapter, and nontrivial tooling change
 uses red-green-refactor TDD. Add strict language/framework linting, formatting,
-type/build checks, behavioral tests, and coverage gates in the same MR that adopts
-the stack. Update GitLab CI with each relevant feature or delivery change, not as
+type/build checks, behavioral tests, and coverage gates in the same PR that adopts
+the stack. Update GitHub Actions with each relevant feature or delivery change, not as
 a later cleanup. The initial pipeline checks repository documentation, configuration,
 Dockerfile, and tested governance tooling; unwired application languages are blocked
 until their real gates are implemented.
 
 Use digest-pinned Docker images, locked dependencies, and legally approved SDK
 acquisition. Add deployment promotion, scanning, approvals, health checks, and rollback
-with the first deployable service. GitLab branch protections and approval requirements
+with the first deployable service. GitHub branch protections and approval requirements
 must be configured separately by an authorized maintainer; committed files alone
 cannot enforce those server-side settings.
+
+The repository is hosted at <https://github.com/L-series/edge-comparator>.
+Trusted owner/main CI uses an isolated Docker runner on the owner's local machine;
+public pull-request checks use GitHub-hosted runners, never that machine. See
+ADR-0004 for the trust boundary, approval policy, and remaining self-hosted-runner risk.
 
 ### 10.4 Production acceptance criteria
 

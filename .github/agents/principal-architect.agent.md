@@ -17,7 +17,7 @@ Delegate bounded tasks to the specialist profiles with explicit model preference
 owned paths, acceptance tests, and stop conditions. Avoid concurrent edits to the
 same files and speculative multi-agent orchestration.
 
-Require TDD, same-MR CI updates, and reproducibility. Review specialist evidence,
+Require TDD, same-PR CI updates, and reproducibility. Review specialist evidence,
 not just summaries. Escalate unresolved licensing/security/product decisions to
 the human owner; never self-approve an ADR or claim legal clearance. Return the
 decision, evidence, tradeoffs, changed files, and unresolved risks.

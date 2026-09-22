@@ -7,17 +7,25 @@ conventions below.
 
 ## Decisions
 
-| ADR                                                                                  | Status   | Scope                                                          |
-| ------------------------------------------------------------------------------------ | -------- | -------------------------------------------------------------- |
-| [0001: Record architecture decisions](0001-record-architecture-decisions.md)         | Accepted | Decision workflow and review                                   |
-| [0002: Use Docker for toolchains](0002-use-docker-for-toolchains.md)                 | Accepted | Portable development tooling and future approved SDK packaging |
-| [0003: Enforce test-driven quality gates](0003-enforce-test-driven-quality-gates.md) | Accepted | GitLab CI, TDD, and incremental language gates                 |
+| ADR                                                                                                                | Status     | Scope                                                              |
+| ------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------------------------------------------------------ |
+| [0001: Record architecture decisions](0001-record-architecture-decisions.md)                                       | Accepted   | Decision workflow and review                                       |
+| [0002: Use Docker for toolchains](0002-use-docker-for-toolchains.md)                                               | Accepted   | Portable tooling and future approved SDK packaging                 |
+| [0003: Enforce test-driven quality gates](0003-enforce-test-driven-quality-gates.md)                               | Superseded | Historical GitLab host choice; quality principles retained by 0004 |
+| [0004: Use GitHub Actions with an isolated local runner](0004-use-github-actions-with-an-isolated-local-runner.md) | Accepted   | Hosted PR checks and owner/main-only local CI                      |
+| [0005: Prototype local ONNX preflight](0005-prototype-local-onnx-preflight.md)                                     | Proposed   | Reversible discovery preview; human production adoption pending    |
 
-These initial Accepted decisions implement explicit user policy. Acceptance is
-not evidence of a successful pipeline, an approved vendor license, a deployed
-service, or configured GitLab protections. No application framework, database,
-queue, or scheduler is selected by these records; candidates in
-[PLAN.md](../../PLAN.md) require evidence and their own decisions.
+Accepted governance and CI decisions implement explicit user policy. Acceptance
+is not evidence of a successful pipeline, approved vendor license, deployed
+service, or configured GitHub protections. ADR-0004 replaces the historical
+GitLab host references in the earlier records without removing their rationale.
+It retains ADR-0003's TDD and strict quality requirements.
+
+The user's 2026-09-22 instruction to start building authorizes the bounded local
+discovery implementation in Proposed ADR-0005. It does not accept that stack
+for production or waive human approval of major architecture decisions. No
+database, queue, authentication service, or compiler SDK is selected. Other
+candidates in [PLAN.md](../../PLAN.md) still require evidence and decisions.
 
 ## When a decision needs a record
 
@@ -57,14 +65,16 @@ input mode, numerical validation, and deployment scope remain explicit gates.
 3. Keep all six template sections substantive. Cite authoritative sources and
    reproducible experiments; distinguish observed facts, assumptions, decisions,
    and unresolved approval or hardware gates.
-4. Submit the Proposed ADR with or before its implementation merge request (MR).
-   Link it from the MR and this index. A responsible human owner independent of
+4. Submit the Proposed ADR with or before its implementation pull request (PR).
+   Link it from the PR and this index. A responsible human owner independent of
    the author reviews the rationale, alternatives, risks, and validation.
    Involve security, legal, and affected owners when their approval is required.
 5. Record the review reference and acceptance date before changing the status
    to Accepted. Rejected proposals remain in the log with their rationale.
-   The three bootstrap records document the explicit user-directed policies,
-   rather than claiming a separate review has already occurred.
+   The bootstrap policies and ADR-0004's CI-host change document explicit user
+   direction rather than claiming a separate review has already occurred.
+   ADR-0005 remains Proposed: its authorized discovery work is not production
+   acceptance or a general exception for implementing unapproved decisions.
 6. Preserve Accepted reasoning. Correct minor errors transparently; append dated
    amendments for clarifications, including evidence and review references.
    A changed decision needs a new ADR linking the old one, with a dated
@@ -79,9 +89,18 @@ who is responsible, and what blocks deployment.
 
 Repository checks can validate ADR shape and related implementation tests.
 They cannot prove the quality of reasoning, legal permission, TDD chronology,
-or independent approval. Human owners must configure protected branches,
-required successful pipelines, appropriate approval rules, protected
-environments, and secrets in GitLab. Committed documentation and agent profiles
-do not activate those settings or replace human security/legal approval.
+or independent approval. Human owners must configure and verify applicable
+GitHub branch/ruleset protections, approval policies, and Actions permissions.
+ADR-0004 routes PR checks to GitHub-hosted `ubuntu-24.04` and limits local CI to
+trusted owner/main runs. Both use the same required `quality` check; strict
+branch protection is configured and verified after bootstrap pushes, not
+activated by this document. Required independent PR review remains pending a
+second trusted maintainer. Never approve fork workflow changes that route
+untrusted work locally; workflow labels and conditions are not a hard boundary.
+
+No deployment or production secrets are authorized. Future deployments require
+separate approval and environment controls. Committed documentation and agent
+profiles do not activate platform settings or replace human security/legal
+approval.
 
 [adr-guide]: https://github.com/architecture-decision-record/architecture-decision-record

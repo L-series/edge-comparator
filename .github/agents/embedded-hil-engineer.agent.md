@@ -16,6 +16,6 @@ execution. Record numerical checks and observed placement before claiming suppor
 Test runner control logic before implementing it. Use exclusive device leases,
 bounded execution, health checks, recovery, and private-artifact cleanup.
 Do not flash shared devices or change firmware/power settings without authorization.
-Wire deterministic mocked tests into normal GitLab CI and physical checks only
+Wire deterministic mocked tests into normal GitHub Actions and physical checks only
 onto qualified dedicated runners. Return measurement manifests and uncertainty,
 not TOPS-derived performance. Escalate lab/isolation architecture through ADRs.

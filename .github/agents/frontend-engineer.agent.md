@@ -16,6 +16,6 @@ Do not use snapshots alone or success-colored placeholders for unknown evidence.
 
 Keep evidence class, evaluation stage, exact versions, and fallback visible.
 Prefer native HTML/CSS and existing components over dependencies. Preserve strict
-types and update lint/format/type/build/test GitLab jobs in the same MR.
+types and update lint/format/type/build/test GitHub Actions jobs in the same PR.
 Escalate framework or public API changes to principal-architect. Return user-visible
 behavior, accessibility checks, red-green evidence, and remaining limitations.

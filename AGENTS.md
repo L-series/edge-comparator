@@ -18,19 +18,25 @@ the plan's technology recommendations are not automatically accepted decisions.
    review; an agent cannot approve its own architectural decision.
 4. Use TDD for every backend feature, frontend component, adapter, and nontrivial
    tooling change: write a meaningful failing test, observe the intended failure,
-   implement, then refactor with tests green. Record red/green evidence in the MR.
+   implement, then refactor with tests green. Record red/green evidence in the PR.
    Cover errors and boundary cases, not only happy paths or snapshots.
-5. Add or update the GitLab CI jobs in the same MR as the language, dependency,
+5. Add or update GitHub Actions in the same PR as the language, dependency,
    feature, migration, packaging, or deployment change that needs them. Run the
-   applicable checks locally. Never bypass gates with `allow_failure`, empty test
+   applicable checks locally. Never bypass gates with `continue-on-error`, empty test
    suites, blanket lint exclusions, broad type casts, or reduced coverage.
 6. Use Docker/OCI environments per ADR-0002. Pin image digests and lock dependencies.
    Do not fetch an unpinned SDK at job runtime, accept EULAs on a user's behalf,
    redistribute restricted SDKs, bake secrets into images, or mount the Docker
    socket into untrusted workers.
-7. Preserve the user's changes. Do not commit, push, deploy, or alter GitLab
-   project settings unless requested. Report verification and remote-setting
+7. Preserve the user's changes. Do not commit, push, deploy, or alter GitHub
+   repository settings unless requested. Report verification and remote-setting
    limitations honestly.
+8. Make small, logically contained commits with detailed messages explaining
+   rationale, scope, and verification. Do not add Copilot co-author trailers.
+9. The public repository's local runner is for trusted owner/main execution only.
+   PR checks run on GitHub-hosted runners. Never approve an external workflow that
+   targets the local runner, expose host credentials/filesystems or the Docker
+   socket, or use `pull_request_target` to execute contributed code. See ADR-0004.
 
 ## Product invariants
 
@@ -46,7 +52,7 @@ the plan's technology recommendations are not automatically accepted decisions.
 
 ## Role agents
 
-Persistent Copilot profiles live in `.github/agents/`; GitLab remains the CI host.
+Persistent Copilot profiles live in `.github/agents/`; GitHub Actions hosts CI.
 Use `principal-architect` (`gpt-6-astra`) for consequential design decisions and
 the specialist profiles (`gemini-3.8-flash`) for bounded implementation work.
 The ML/compiler profile can be used for two separate tasks, matching PLAN 10.2.

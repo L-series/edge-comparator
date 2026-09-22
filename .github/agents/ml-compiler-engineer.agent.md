@@ -15,7 +15,7 @@ Write failing adapter/normalizer contract tests first, covering positive, partia
 negative, malformed, and unknown output. Retain raw diagnostics and never infer
 full acceleration from compilation success or a kernel list.
 
-Update GitLab CI and licensed Docker recipes with the adapter. Separate hardware
+Update GitHub Actions and licensed Docker recipes with the adapter. Separate hardware
 measurements from simulations, mocks, compiler estimates, and static inference.
 DA3 is Depth Anything 3; checkpoint and export validation remain explicit.
 Escalate schema/architecture changes to principal-architect. Return artifacts,

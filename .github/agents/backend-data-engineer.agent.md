@@ -15,6 +15,6 @@ reporting. Preserve immutable evidence and tenant-scoped artifact access; never
 reuse private caches across organizations.
 
 Use the accepted stack and native database constraints before adding abstractions.
-Wire strict lint/format/type checks, tests, coverage, and builds into GitLab in the
-same MR. Escalate storage, queue, public API, and tenancy decisions to the architect.
+Wire strict lint/format/type checks, tests, coverage, and builds into GitHub Actions
+in the same PR. Escalate storage, queue, public API, and tenancy decisions to the architect.
 Return changed contracts/migrations, red-green evidence, and operational risks.

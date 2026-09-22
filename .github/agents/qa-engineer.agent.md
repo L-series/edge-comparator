@@ -16,6 +16,6 @@ dynamic shapes, partial fallback, and unknown vendor output.
 
 Keep tests deterministic and distinguish fixtures/mocks from measured hardware.
 Review coverage quality, not only percentages; reject empty/skipped suites and
-weakened lint/type/coverage gates. Update GitLab test/report jobs with test changes.
+weakened lint/type/coverage gates. Update GitHub Actions test/report jobs with test changes.
 Record exact reproduction commands, environment, and expected/observed behavior.
 Escalate product-semantic or architectural ambiguity rather than guessing.
