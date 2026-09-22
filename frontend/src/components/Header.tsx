@@ -10,9 +10,10 @@ export function Header(): JSX.Element {
             <strong>Local Research Preview Only</strong>
           </p>
           <p className="notice-body">
-            Local research prototype only. No actual hardware acceleration is evaluated in this
-            preflight stage. Private intellectual property / models are inspected locally or via
-            configured boundary; not for public SaaS or unverified execution.
+            Local research prototype evaluating real CPU compilation via OpenVINO. No actual
+            hardware acceleration, model inference, or benchmarking is evaluated. Private
+            intellectual property / models are inspected and compiled locally; not for public SaaS
+            or unverified execution.
           </p>
         </div>
       </div>

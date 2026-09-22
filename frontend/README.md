@@ -21,11 +21,11 @@ In accordance with [ADR-0005: Prototype local ONNX preflight](../docs/decisions/
 
 The frontend communicates with the backend via same-origin `/api` endpoints:
 
-| Endpoint       | Method | Request                                                                               | Response / Behavior                                                                                                                                                                                                        |
-| -------------- | ------ | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/api/health`  | `GET`  | Empty                                                                                 | `{ "status": "ok" }`                                                                                                                                                                                                       |
-| `/api/targets` | `GET`  | Empty                                                                                 | Array of `Target` objects: `[{ id, name, vendor, accelerator, source_url, configuration_status: 'catalog_only' }]`. Expected targets: `nvidia-jetson-orin-nano`, `intel-openvino-cpu`, `nxp-imx93-ethos-u65`.              |
-| `/api/inspect` | `POST` | Raw model bytes (`application/octet-stream`, <= 16MiB; **NOT** `multipart/form-data`) | `{ "evidence_type": "static_inferred", "stage": "preflight", "model": { sha256, format: "onnx", ir_version, opsets, inputs, outputs, operations, node_count }, "results": [{ target_id, status: "not_tested", reason }] }` |
+| Endpoint       | Method | Request                                                                               | Response / Behavior                                                                                                                                                                                                                    |
+| -------------- | ------ | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/health`  | `GET`  | Empty                                                                                 | `{ "status": "ok" }`                                                                                                                                                                                                                   |
+| `/api/targets` | `GET`  | Empty                                                                                 | Array of `Target` objects: `[{ id, name, vendor, accelerator, source_url, configuration_status: 'catalog_only' }]`. Expected targets: `nvidia-jetson-orin-nano`, `intel-openvino-cpu` (Local CPU via OpenVINO), `nxp-imx93-ethos-u65`. |
+| `/api/inspect` | `POST` | Raw model bytes (`application/octet-stream`, <= 16MiB; **NOT** `multipart/form-data`) | `{ "evidence_type": "static_inferred", "stage": "preflight", "model": { sha256, format: "onnx", ir_version, opsets, inputs, outputs, operations, node_count }, "results": [{ target_id, status: "not_tested", reason }] }`             |
 
 Error responses return JSON with `{ "detail": string }` on HTTP status codes such as 413 (Payload Too Large), 415 (Unsupported Media Type), 422 (Unprocessable Entity), or 503 (Service Unavailable).
 
@@ -81,3 +81,18 @@ JUnit reports are written to `reports/`; failure traces use only generated fixtu
 
 - **Hardware Execution:** No actual hardware compilation, device flashing, or profiling occurs. All results report preflight static status.
 - **Missing evidence:** A missing target result is displayed as Inconclusive, not silently invented as Not tested.
+
+## Real OpenVINO CPU Compiler Demonstration (ADR-0006 Proposed)
+
+In accordance with [ADR-0006: Local compiler evidence demo](../docs/decisions/0006-local-compiler-evidence-demo.md) (Status: Proposed), the frontend provides a bounded demonstration of real CPU compilation using OpenVINO for the Local CPU target (`intel-openvino-cpu`):
+
+- **Truthful boundaries:** The interface truthfully states real CPU graph compilation via OpenVINO without claiming model inference, numerical benchmarking, or hardware acceleration. The actual host CPU device (e.g., AMD Ryzen or Intel CPU) is recorded and labeled truthfully without falsely claiming Intel hardware support.
+- **Synthetic demo models:** Users can load generated demo models (`supported-cnn` and `unsupported-op`) directly from `/api/demos/*` without requiring external weight downloads.
+- **Explicit retention consent:** Per-file consent checkbox (`Save model and evidence locally`) is required before compiling on local CPU. Consent resets on every model selection change.
+- **Retention capacity limits:** Storage is capped at 20 runs and 512 MiB total local disk capacity. Users can inspect persisted runs in the history table and permanently delete records.
+- **Outcomes mapped:**
+  - `Compiled — execution unverified`: Model successfully imported and translated for OpenVINO CPU plugin (neutral status badge).
+  - `Compile failed`: Compiler or validation failure with user-visible diagnostics (e.g., unsupported operators).
+  - `Inconclusive`: Missing evidence or environment error.
+- **Evidence provenance:** Comprehensive provenance cards display exact model SHA-256, evaluation key, OpenVINO version and build, target CPU device name, adapter and dependency lock hashes, container digest (noting bare-metal native host when unrecorded), query placements disclaimer (explicitly noting imported query support map, not runtime placement or 1:1 ONNX mapping), and raw diagnostics with individual artifact downloads (`model.onnx`, `worker.stdout.json`, `worker.stderr.txt`, `diagnostics.txt`, `uv.lock`) and full JSON report download.
+- **Client lifecycle:** HTTP requests are aborted on unmount and stale responses are discarded when file selections change.
