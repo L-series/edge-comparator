@@ -14,6 +14,7 @@ conventions below.
 | [0003: Enforce test-driven quality gates](0003-enforce-test-driven-quality-gates.md)                               | Superseded | Historical GitLab host choice; quality principles retained by 0004 |
 | [0004: Use GitHub Actions with an isolated local runner](0004-use-github-actions-with-an-isolated-local-runner.md) | Accepted   | Hosted PR checks and owner/main-only local CI                      |
 | [0005: Prototype local ONNX preflight](0005-prototype-local-onnx-preflight.md)                                     | Proposed   | Reversible discovery preview; human production adoption pending    |
+| [0006: Build a local compiler-evidence demo](0006-local-compiler-evidence-demo.md)                                 | Proposed   | Gated OpenVINO CPU compilation and consented local evidence        |
 
 Accepted governance and CI decisions implement explicit user policy. Acceptance
 is not evidence of a successful pipeline, approved vendor license, deployed
@@ -21,11 +22,12 @@ service, or configured GitHub protections. ADR-0004 replaces the historical
 GitLab host references in the earlier records without removing their rationale.
 It retains ADR-0003's TDD and strict quality requirements.
 
-The user's 2026-09-22 instruction to start building authorizes the bounded local
-discovery implementation in Proposed ADR-0005. It does not accept that stack
-for production or waive human approval of major architecture decisions. No
-database, queue, authentication service, or compiler SDK is selected. Other
-candidates in [PLAN.md](../../PLAN.md) still require evidence and decisions.
+The user's 2026-09-22 implementation instructions authorize bounded local
+discovery in Proposed ADR-0005 and its compiler-evidence extension in Proposed
+ADR-0006. OpenVINO CPU is the first local adapter, conditional on package/license
+and telemetry gates; production adoption remains unapproved. No database,
+queue, or authentication service is selected. Other candidates in
+[PLAN.md](../../PLAN.md) still require evidence and decisions.
 
 ## When a decision needs a record
 
@@ -73,8 +75,9 @@ input mode, numerical validation, and deployment scope remain explicit gates.
    to Accepted. Rejected proposals remain in the log with their rationale.
    The bootstrap policies and ADR-0004's CI-host change document explicit user
    direction rather than claiming a separate review has already occurred.
-   ADR-0005 remains Proposed: its authorized discovery work is not production
-   acceptance or a general exception for implementing unapproved decisions.
+   ADRs 0005 and 0006 remain Proposed: their authorized discovery work is not
+   production acceptance or a general exception for implementing unapproved
+   decisions.
 6. Preserve Accepted reasoning. Correct minor errors transparently; append dated
    amendments for clarifications, including evidence and review references.
    A changed decision needs a new ADR linking the old one, with a dated
