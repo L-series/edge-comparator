@@ -56,7 +56,8 @@ async def test_targets_catalog_invariants(async_client: AsyncClient) -> None:
     assert "developer.nvidia.com" in nvidia["source_url"] or "nvidia.com" in nvidia["source_url"]
 
     intel = next(t for t in targets if t["id"] == "intel-openvino-cpu")
-    assert intel["vendor"] == "Intel"
+    assert intel["vendor"] == "Local host (OpenVINO by Intel)"
+    assert intel["name"] == "Local CPU via OpenVINO"
     assert "openvino" in intel["accelerator"].lower() or "cpu" in intel["accelerator"].lower()
     assert "openvino" in intel["source_url"].lower()
 
