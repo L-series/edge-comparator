@@ -100,6 +100,8 @@ test("blocks application code until its language-specific gates are implemented"
       "eslint.config.mjs",
       "backend/src/edge_comparator/api.py",
       "backend/tests/test_api.py",
+      "backend/stubs/openvino/__init__.pyi",
+      "backend/stubs/openvino/frontend/__init__.pyi",
       "frontend/src/App.tsx",
       "frontend/src/style.css",
       "frontend/index.html",
@@ -112,6 +114,7 @@ test("blocks application code until its language-specific gates are implemented"
   );
   for (const file of [
     "backend/app.py",
+    "backend/stubs/unknown/__init__.pyi",
     "frontend/Button.tsx",
     "frontend/index.ts",
     "app.js",
@@ -194,6 +197,26 @@ test("requires actual backend and frontend CI gates before accepting application
   assert.ok(checkRepository(root).some((error) => error.includes("Playwright")));
   write("frontend/package.json", "{invalid");
   assert.ok(checkRepository(root).some((error) => error.includes("Invalid frontend package")));
+});
+
+test("requires an unconditional real-SDK integration gate when the compiler ships", (t) => {
+  const { root, write } = fixture(t);
+  write("backend/src/edge_comparator/compiler_worker.py", "# Compiler\n");
+  const command =
+    "uv run --frozen pytest -m integration --no-cov --junitxml=reports/compiler-integration.xml";
+  write(".github/workflows/ci.yml", pipeline);
+  assert.ok(checkRepository(root).some((error) => error.includes("Compiler CI")));
+  const step = `
+      - working-directory: backend
+        run: ${command}
+`;
+  write(".github/workflows/ci.yml", pipeline + step);
+  assert.ok(!checkRepository(root).some((error) => error.includes("Compiler CI")));
+  write(
+    ".github/workflows/ci.yml",
+    pipeline + step.replace("        run:", "        if: false\n        run:"),
+  );
+  assert.ok(checkRepository(root).some((error) => error.includes("Compiler CI")));
 });
 
 const image = `node:24-bookworm-slim@sha256:${"a".repeat(64)}`;
