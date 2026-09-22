@@ -1,8 +1,9 @@
 # Development and delivery
 
-This repository is at the development-foundation stage. `PLAN.md` defines the
-product; no backend, frontend, vendor SDK image, or deployment currently exists.
-The root Node package is development tooling, not an application stack decision.
+This repository contains the local ONNX preflight discovery slice described by
+Proposed ADR-0005. `PLAN.md` defines the larger product; no vendor SDK execution
+or production deployment exists. The root Node package provides repository
+governance; application packages enforce their own language-specific gates.
 
 ## Local checks
 
@@ -32,6 +33,21 @@ docker run --rm -i --network none hadolint/hadolint:v2.14.0-debian@sha256:158cd0
 
 The quality image contains only repository development tools, not vendor SDKs.
 It is not the sandbox for untrusted model execution.
+
+Backend checks use the committed Python version and `uv.lock`:
+
+```sh
+cd backend
+uv sync --frozen --all-groups
+uv run --frozen ruff check .
+uv run --frozen ruff format --check .
+uv run --frozen mypy src tests
+uv run --frozen pytest
+uv build --no-sources
+```
+
+See [backend setup and limitations](backend/README.md). Use generated test
+models, never private or untrusted uploads, in CI.
 
 ## Architecture decision records
 

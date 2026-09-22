@@ -1,7 +1,19 @@
 import js from "@eslint/js";
 
 export default [
-  { ignores: ["node_modules/**", ".npm/**", "reports/**", "coverage/**", ".vscode/**"] },
+  {
+    // The frontend has its own mandatory, type-aware lint step in CI.
+    ignores: [
+      "**/node_modules/**",
+      "**/.venv/**",
+      "**/dist/**",
+      "**/.npm/**",
+      "**/reports/**",
+      "**/coverage/**",
+      ".vscode/**",
+      "frontend/**",
+    ],
+  },
   js.configs.recommended,
   {
     files: ["**/*.mjs"],

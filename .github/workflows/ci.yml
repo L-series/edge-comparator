@@ -33,6 +33,21 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Repository quality
         run: npm run check
+      - name: Install uv on the hosted PR runner
+        if: github.event_name == 'pull_request'
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: 0.12.17
+          enable-cache: false
+      - name: Backend quality and package build
+        working-directory: backend
+        run: |
+          uv sync --frozen --all-groups
+          uv run --frozen ruff check .
+          uv run --frozen ruff format --check .
+          uv run --frozen mypy src tests
+          uv run --frozen pytest
+          uv build --no-sources
       - name: Lint workflow and Docker recipes
         env:
           HADOLINT_IMAGE: hadolint/hadolint:v2.14.0-debian@sha256:158cd0184dcaa18bd8ec20b61f4c1cabdf8b32a592d062f57bdcb8e4c1d312e2
@@ -50,6 +65,8 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: quality-reports
-          path: reports/
+          path: |
+            reports/
+            backend/reports/
           if-no-files-found: error
           retention-days: 14

@@ -1,5 +1,14 @@
 {
-  "globs": ["**/*.md", "!node_modules/**", "!reports/**", "!.vscode/**"],
+  "globs": [
+    "**/*.md",
+    "!**/node_modules/**",
+    "!**/.venv/**",
+    "!**/dist/**",
+    "!**/reports/**",
+    "!**/coverage/**",
+    "!**/playwright-report/**",
+    "!.vscode/**",
+  ],
   "config": {
     "default": true,
     "MD013": false,
