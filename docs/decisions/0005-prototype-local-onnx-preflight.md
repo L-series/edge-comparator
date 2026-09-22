@@ -4,6 +4,13 @@ Status: Proposed
 
 Date: 2026-09-22
 
+Amendment (2026-09-22): the user authorizes the bounded local compiler-evidence
+extension in Proposed [ADR-0006](0006-local-compiler-evidence-demo.md), including
+one gated OpenVINO CPU adapter and explicitly consented local retention through
+separate compile/history endpoints. The original preflight scope and rationale
+below remain unchanged: `/api/inspect` stays transient and returns Not tested.
+This extension does not accept either record's stack for production.
+
 ## Context
 
 The user has authorized starting implementation rather than stopping at
