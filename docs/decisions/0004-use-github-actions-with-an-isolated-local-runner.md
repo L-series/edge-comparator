@@ -209,6 +209,21 @@ not be inferred from zero mounts. Failed isolation checks require stopping the
 runner. Production deployment and untrusted local execution remain outside
 approval.
 
+Operational follow-up on 2026-09-22: GitHub protection settings were read back
+with strict, required `quality` checks bound to the GitHub Actions app, administrator
+enforcement, required PRs and resolved conversations, linear history, and disabled
+force pushes/deletion. Required independent approvals remain zero pending a second
+trusted maintainer; no independent human approval is claimed.
+
+The [backend main run](https://github.com/L-series/edge-comparator/actions/runs/35765329632)
+passed on the local runner. The
+[frontend PR run](https://github.com/L-series/edge-comparator/actions/runs/35766463676)
+passed hosted application, browser/accessibility, and Docker environment checks.
+The idle bootstrap runner was replaced with repository runner ID `3`, retaining
+the same restrictions and adding the pinned Playwright browser environment.
+Docker is currently socket-activated: enabling automatic daemon startup requires
+the owner's sudo approval, as documented in [runner operations](../../ci/README.md).
+
 ## References
 
 - User direction of 2026-09-22: GitHub repository, local CI runner, and start

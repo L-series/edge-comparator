@@ -45,6 +45,18 @@ container keeps it stopped. Container recreation requires fresh registration.
 The runner image is pinned rather than self-updating; rebuild and re-register
 within GitHub's update window (normally 30 days, sooner for critical updates).
 
+For unattended CI after reboot, the host Docker service must start at boot:
+
+```sh
+sudo systemctl enable docker.service
+systemctl is-enabled docker.service
+```
+
+Socket activation alone may leave the runner offline until a local Docker command
+starts the daemon. The initial setup could not enable the service without the
+owner's sudo password; the current runner is online and restarts with Docker, but
+this host-level boot prerequisite still requires owner action.
+
 ## Verify and operate
 
 ```sh
