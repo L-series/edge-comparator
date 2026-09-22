@@ -238,6 +238,34 @@ export function checkRepository(root) {
           "Frontend CI requires locked dependencies and blocking lint/type/test/build checks",
         );
       }
+      if (files.some((file) => /^frontend\/e2e\/.+\.ts$/.test(file))) {
+        if (
+          !steps.some(
+            (step) => step?.run === "npm --prefix frontend run test:e2e" && !("if" in step),
+          )
+        ) {
+          errors.push("Browser CI must run blocking real frontend/API integration tests");
+        }
+        if (files.includes("frontend/package.json") && files.includes("ci/runner.Dockerfile")) {
+          try {
+            const version = JSON.parse(read("frontend/package.json"))?.devDependencies?.[
+              "@playwright/test"
+            ];
+            if (
+              typeof version !== "string" ||
+              !/^\d+\.\d+\.\d+$/.test(version) ||
+              !read("ci/runner.Dockerfile").includes(
+                `FROM mcr.microsoft.com/playwright:v${version}-noble@sha256:`,
+              )
+            ) {
+              errors.push("Playwright package and pinned runner browser image versions must match");
+            }
+          } catch (error) {
+            if (!(error instanceof SyntaxError)) throw error;
+            errors.push("Invalid frontend package JSON");
+          }
+        }
+      }
       if (
         !Number.isInteger(job?.["timeout-minutes"]) ||
         job["timeout-minutes"] < 1 ||

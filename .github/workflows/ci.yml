@@ -48,6 +48,16 @@ jobs:
           uv run --frozen mypy src tests
           uv run --frozen pytest
           uv build --no-sources
+      - name: Install locked frontend dependencies
+        run: npm --prefix frontend ci --ignore-scripts --no-audit --no-fund
+      - name: Frontend quality and production build
+        run: npm --prefix frontend run check
+      - name: Install Chromium on the hosted PR runner
+        if: github.event_name == 'pull_request'
+        working-directory: frontend
+        run: npm exec -- playwright install --with-deps chromium
+      - name: Real browser/API flow and accessibility
+        run: npm --prefix frontend run test:e2e
       - name: Lint workflow and Docker recipes
         env:
           HADOLINT_IMAGE: hadolint/hadolint:v2.14.0-debian@sha256:158cd0184dcaa18bd8ec20b61f4c1cabdf8b32a592d062f57bdcb8e4c1d312e2
@@ -60,6 +70,13 @@ jobs:
             docker run --rm --network none -v "$PWD:/work:ro" -w /work "$HADOLINT_IMAGE" hadolint ci/Dockerfile ci/runner.Dockerfile
             docker run --rm --network none -v "$PWD:/work:ro" -w /work "$ACTIONLINT_IMAGE"
           fi
+      - name: Verify portable Docker environments on the hosted PR runner
+        if: github.event_name == 'pull_request'
+        run: |
+          docker build --quiet -f ci/Dockerfile -t edge-quality:pr .
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges edge-quality:pr
+          docker build --quiet -f ci/runner.Dockerfile -t edge-runner:pr .
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges edge-runner:pr bash -c './bin/Runner.Listener --version && node --version && uv --version'
       - name: Preserve public-only test reports
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -68,5 +85,7 @@ jobs:
           path: |
             reports/
             backend/reports/
+            frontend/reports/
+            frontend/test-results/
           if-no-files-found: error
           retention-days: 14

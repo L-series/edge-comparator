@@ -170,6 +170,30 @@ test("requires actual backend and frontend CI gates before accepting application
       ),
   );
   assert.ok(checkRepository(root).some((error) => error.includes("Frontend CI")));
+
+  write("frontend/e2e/inspect.spec.ts", "// Real browser flow\n");
+  write(".github/workflows/ci.yml", pipeline + steps);
+  assert.ok(checkRepository(root).some((error) => error.includes("Browser CI")));
+  write(
+    ".github/workflows/ci.yml",
+    pipeline + steps + "      - run: npm --prefix frontend run test:e2e\n",
+  );
+  write(
+    "frontend/package.json",
+    JSON.stringify({ devDependencies: { "@playwright/test": "1.63.0" } }),
+  );
+  write(
+    "ci/runner.Dockerfile",
+    `FROM ${image} AS node\nFROM mcr.microsoft.com/playwright:v1.63.0-noble@sha256:${"a".repeat(64)}\n`,
+  );
+  assert.deepEqual(checkRepository(root), []);
+  write(
+    "frontend/package.json",
+    JSON.stringify({ devDependencies: { "@playwright/test": "1.64.0" } }),
+  );
+  assert.ok(checkRepository(root).some((error) => error.includes("Playwright")));
+  write("frontend/package.json", "{invalid");
+  assert.ok(checkRepository(root).some((error) => error.includes("Invalid frontend package")));
 });
 
 const image = `node:24-bookworm-slim@sha256:${"a".repeat(64)}`;
