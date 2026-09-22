@@ -1,8 +1,14 @@
+import { z } from "zod";
 import {
   ApiErrorSchema,
+  CompilationRunSchema,
   InspectResponseSchema,
+  RunSummarySchema,
   TargetCatalogSchema,
+  type CompilationRun,
+  type DemoId,
   type InspectResponse,
+  type RunSummary,
   type TargetCatalog,
 } from "../types/api";
 
@@ -80,4 +86,79 @@ export async function inspectModel(file: File, signal?: AbortSignal): Promise<In
     throw new Error(`Invalid inspect response schema: ${parsed.error.message}`);
   }
   return parsed.data;
+}
+
+export async function fetchDemo(demoId: DemoId, signal?: AbortSignal): Promise<File> {
+  const response = await fetch(`/api/demos/${demoId}`, { signal });
+  if (!response.ok) {
+    await handleApiError(response);
+  }
+  const blob = await response.blob();
+  const filename =
+    demoId === "supported-cnn" ? "demo_supported_cnn.onnx" : "demo_unsupported_op.onnx";
+  return new File([blob], filename, { type: "application/octet-stream" });
+}
+
+export async function compileModel(file: File, signal?: AbortSignal): Promise<CompilationRun> {
+  const validationError = validateOnnxFile(file);
+  if (validationError) {
+    throw new Error(validationError);
+  }
+
+  const response = await fetch("/api/compile", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/octet-stream",
+      "X-Retain-Evidence": "true",
+    },
+    body: file,
+    signal,
+  });
+
+  if (!response.ok) {
+    await handleApiError(response);
+  }
+
+  const data: unknown = await response.json();
+  const parsed = CompilationRunSchema.safeParse(data);
+  if (!parsed.success) {
+    throw new Error(`Invalid compile response schema: ${parsed.error.message}`);
+  }
+  return parsed.data;
+}
+
+export async function fetchRuns(signal?: AbortSignal): Promise<RunSummary[]> {
+  const response = await fetch("/api/runs", { signal });
+  if (!response.ok) {
+    await handleApiError(response);
+  }
+  const data: unknown = await response.json();
+  const parsed = z.array(RunSummarySchema).safeParse(data);
+  if (!parsed.success) {
+    throw new Error(`Invalid runs list schema: ${parsed.error.message}`);
+  }
+  return parsed.data;
+}
+
+export async function fetchRun(id: string, signal?: AbortSignal): Promise<CompilationRun> {
+  const response = await fetch(`/api/runs/${encodeURIComponent(id)}`, { signal });
+  if (!response.ok) {
+    await handleApiError(response);
+  }
+  const data: unknown = await response.json();
+  const parsed = CompilationRunSchema.safeParse(data);
+  if (!parsed.success) {
+    throw new Error(`Invalid run response schema: ${parsed.error.message}`);
+  }
+  return parsed.data;
+}
+
+export async function deleteRun(id: string, signal?: AbortSignal): Promise<void> {
+  const response = await fetch(`/api/runs/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    signal,
+  });
+  if (!response.ok) {
+    await handleApiError(response);
+  }
 }

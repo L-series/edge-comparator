@@ -1,11 +1,13 @@
 import type { JSX } from "react";
-import type { InspectResult, Target } from "../types/api";
+import type { CompilationRun, InspectResult, Target } from "../types/api";
 
 export interface ComparisonMatrixProps {
   targets: Target[];
   selectedTargetIds: Set<string>;
   results: InspectResult[];
   hasInspected: boolean;
+  compileRecord?: CompilationRun | null;
+  currentModelSha?: string | null;
 }
 
 export function ComparisonMatrix({
@@ -13,6 +15,8 @@ export function ComparisonMatrix({
   selectedTargetIds,
   results,
   hasInspected,
+  compileRecord = null,
+  currentModelSha = null,
 }: ComparisonMatrixProps): JSX.Element {
   if (!hasInspected) {
     return (
@@ -67,13 +71,48 @@ export function ComparisonMatrix({
             {visibleTargets.map((target) => {
               const res = resultMap.get(target.id);
               const hasResult = res !== undefined;
-              const statusText = hasResult ? "Not tested" : "Inconclusive";
-              const statusClass = hasResult
+              let statusText = hasResult ? "Not tested" : "Inconclusive";
+              let statusClass = hasResult
                 ? "status-badge status-not-tested"
                 : "status-badge status-inconclusive";
-              const reason = hasResult
+              let runtimeText = "Not selected";
+              let reason = hasResult
                 ? res.reason
                 : "Missing evaluation record from inspect response";
+
+              // Check if compile record applies to this target and current model
+              const isMatchingModel =
+                compileRecord !== null &&
+                currentModelSha !== null &&
+                compileRecord.model.sha256 === currentModelSha;
+
+              if (isMatchingModel && target.id === compileRecord.target_id) {
+                if (compileRecord.status === "compiled_unverified") {
+                  statusText = "Compiled — execution unverified";
+                  statusClass = "status-badge status-compiled";
+                } else if (compileRecord.status === "compile_failed") {
+                  statusText = "Compile failed";
+                  statusClass = "status-badge status-compile-failed";
+                } else {
+                  statusText = "Inconclusive";
+                  statusClass = "status-badge status-inconclusive";
+                }
+
+                const compilerVersion = compileRecord.configuration.compiler_version;
+                const device = compileRecord.configuration.device_name;
+                const versionLabel = compilerVersion ?? "version not reported";
+                runtimeText = device
+                  ? `OpenVINO ${versionLabel} (${device})`
+                  : `OpenVINO ${versionLabel}`;
+                reason = compileRecord.summary;
+              } else if (!hasResult && compileRecord !== null && results.length === 0) {
+                // Compile-alone flow: inspect was not run, so absence from inspect results
+                // is due to known CPU-only demonstration scope, NOT a missing API result.
+                statusText = "Not tested";
+                statusClass = "status-badge status-not-tested";
+                runtimeText = "Not selected";
+                reason = "Not evaluated; compiler demonstration scoped to local CPU";
+              }
 
               return (
                 <tr key={target.id}>
@@ -88,7 +127,7 @@ export function ComparisonMatrix({
                     <span className={statusClass}>{statusText}</span>
                   </td>
                   <td>
-                    <span className="runtime-badge">Not selected</span>
+                    <span className="runtime-badge">{runtimeText}</span>
                   </td>
                   <td className="reason-cell">{reason}</td>
                 </tr>

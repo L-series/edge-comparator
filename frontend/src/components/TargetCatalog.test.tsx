@@ -15,9 +15,9 @@ const mockTargets: Target[] = [
   },
   {
     id: "intel-openvino-cpu",
-    name: "Intel Core Ultra (OpenVINO CPU)",
-    vendor: "Intel",
-    accelerator: "x86_64 CPU (AVX2/VNNI)",
+    name: "Local CPU via OpenVINO",
+    vendor: "Local host (OpenVINO by Intel)",
+    accelerator: "CPU only; actual processor recorded per run",
     source_url: "https://example.com/openvino",
     configuration_status: "catalog_only",
   },

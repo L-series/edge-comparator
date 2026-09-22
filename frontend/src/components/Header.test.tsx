@@ -13,8 +13,11 @@ describe("Header", () => {
   it("displays the prominent local research preview notice", () => {
     render(<Header />);
     expect(
+      screen.getByText(/Local research prototype evaluating real CPU compilation via OpenVINO/i),
+    ).toBeInTheDocument();
+    expect(
       screen.getByText(
-        /Local research prototype only\. No actual hardware acceleration is evaluated/i,
+        /No actual hardware acceleration, model inference, or benchmarking is evaluated/i,
       ),
     ).toBeInTheDocument();
     expect(screen.getByText(/not for public SaaS or unverified execution/i)).toBeInTheDocument();
