@@ -48,6 +48,9 @@ jobs:
           uv run --frozen mypy src tests
           uv run --frozen pytest
           uv build --no-sources
+      - name: Mandatory real pinned OpenVINO compiler cases
+        working-directory: backend
+        run: uv run --frozen pytest -m integration --no-cov --junitxml=reports/compiler-integration.xml
       - name: Install locked frontend dependencies
         run: npm --prefix frontend ci --ignore-scripts --no-audit --no-fund
       - name: Frontend quality and production build

@@ -74,7 +74,7 @@ export function checkAgent(name, text) {
 export function checkSources(files) {
   const errors = [];
   const supported =
-    /^(backend\/(?:src|tests)\/.+\.py|frontend\/(?:src\/.+\.(?:tsx?|css)|e2e\/.+\.ts|(?:vite|vitest|playwright)\.config\.ts|index\.html))$/;
+    /^(backend\/(?:(?:src|tests)\/.+\.py|stubs\/openvino\/(?:frontend\/)?__init__\.pyi)|frontend\/(?:src\/.+\.(?:tsx?|css)|e2e\/.+\.ts|(?:vite|vitest|playwright)\.config\.ts|index\.html))$/;
   const unwired =
     /\.(py|pyi|pyw|js|cjs|jsx|ts|mts|cts|tsx|go|rs|c|cc|cpp|h|hpp|sh|bash|zsh|rb|java|kt|swift|cs|html|css|scss|svelte|vue|dart|php|lua|zig|pl|ex|erl|hs|nix)$/i;
   for (const file of files) {
@@ -203,6 +203,21 @@ export function checkRepository(root) {
         errors.push("Only trusted owner/main jobs may use the local runner; PRs must run hosted");
       }
       const steps = Array.isArray(job?.steps) ? job.steps : [];
+      if (
+        files.includes("backend/src/edge_comparator/compiler_worker.py") &&
+        !steps.some(
+          (step) =>
+            step?.["working-directory"] === "backend" &&
+            !("if" in step) &&
+            String(step.run)
+              .split("\n")
+              .includes(
+                "uv run --frozen pytest -m integration --no-cov --junitxml=reports/compiler-integration.xml",
+              ),
+        )
+      ) {
+        errors.push("Compiler CI must run the mandatory real pinned-SDK integration cases");
+      }
       if (
         files.some((file) => /^backend\/.+\.py$/.test(file)) &&
         (["backend/pyproject.toml", "backend/uv.lock"].some((file) => !files.includes(file)) ||

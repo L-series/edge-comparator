@@ -5,12 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "edge-comparator-backend"
 version = "0.1.0"
-description = "Edge-AI Hardware Comparator Backend Preflight Prototype"
+description = "Local ONNX preflight and OpenVINO CPU compiler evidence"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi==0.141.1",
     "onnx==1.23.0",
+    "openvino==2026.4.0",
+    "openvino-telemetry==2025.2.0",
     "pydantic==2.13.5",
     "uvicorn==0.53.0",
 ]
@@ -28,6 +30,9 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/edge_comparator"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"uv.lock" = "edge_comparator/uv.lock"
 
 [tool.ruff]
 target-version = "py312"
@@ -53,6 +58,7 @@ ignore = []
 "tests/*" = ["S101", "S603", "S607"]
 
 [tool.mypy]
+mypy_path = "$MYPY_CONFIG_FILE_DIR/stubs"
 python_version = "3.12"
 strict = true
 warn_unused_configs = true
@@ -79,3 +85,4 @@ addopts = [
     "--cov-fail-under=90",
 ]
 asyncio_mode = "auto"
+markers = ["integration: invokes the actual pinned vendor SDK; never skipped in CI"]
