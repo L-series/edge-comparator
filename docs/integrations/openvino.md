@@ -14,9 +14,9 @@
 - **Maintainership:** Actively maintained open-source project by Intel Corporation and community contributors on GitHub (`openvinotoolkit/openvino`).
 - **Core SDK License:** Apache-2.0 across C++ runtime, frontends, and Python bindings (not wrapper-only).
 - **Third-Party Conditions:** Wheel notices (`runtime-third-party-programs.txt`, `onednn_third-party-programs.txt`, `onetbb_third-party-programs.txt` in `.dist-info/licenses/`) enumerate runtime third-party components under permissive terms: oneDNN (Apache-2.0), oneTBB (Apache-2.0), gflags (BSD-3-Clause), ITT/JIT (BSD-3-Clause), Safe String Library (MIT), XByak (BSD-3-Clause), zlib (zlib license), Level Zero (Apache-2.0), and ONNX (Apache-2.0). Redistribution requires retaining bundled notices and disclaimers; no trademark license.
-- **Offline / Non-interactive Local Use:** Fully operational without network access, credentials, API keys, or proprietary click-through EULAs. Host-only CPU compilation requires no GPU or proprietary drivers.
+- **Non-interactive Local Use:** The CPU path uses local packages without a vendor account, cloud job, API key, GPU, or proprietary GPU driver. The local smoke probe is not proof of native-network isolation.
 - **Telemetry & Offline Source Audit:**
-  - `openvino.Core.read_model(bytes)` and `compile_model()` operate strictly in-memory and do not register `TelemetryExtension` (only converter utilities like `ovc` register it).
+  - The runtime/frontend API path does not configure the converter's `TelemetryExtension`; converter utilities such as `ovc` have a separate telemetry integration. The worker reads a private model file and retains no serialized engine.
   - Runtime dependency `openvino-telemetry` (pinned `2025.2.0`) checks consent via `OptInChecker`, looking for `$HOME/intel/openvino_telemetry`.
   - When the consent file exists and contains `"0"`, `OptInChecker.check()` returns `ConsentCheckResult.DECLINED`, forcing `self.consent = False`.
   - Source verification confirms that `self.consent = False` blocks all telemetry: `start_session`, `end_session`, `send_error`, `send_stack_trace`, and `send_event` (where `force_send=False` by default; `force_send=True` occurs only in interactive CLI dialog or CLI `opt_in_out --opt_out`).
@@ -24,36 +24,14 @@
     1. Run compilation in a dedicated subprocess with `os.environ["HOME"] = str(worker_temp_dir)`.
     2. Seed `$worker_temp_dir/intel/openvino_telemetry` with `"0"` prior to importing OpenVINO.
     3. Set `os.environ["CI"] = "true"` in the worker process environment.
-  - **Opt-Out Verification Snippet:**
-
-    ```python
-    import os
-    from pathlib import Path
-    from openvino_telemetry.main import Telemetry
-    from openvino_telemetry.utils.opt_in_checker import OptInChecker, ConsentCheckResult
-
-    worker_home = Path("worker_scratch_dir")  # request-scoped temp dir
-    os.environ["HOME"] = str(worker_home)
-    os.environ["CI"] = "true"
-    consent_file = worker_home / "intel" / "openvino_telemetry"
-    consent_file.parent.mkdir(parents=True, exist_ok=True)
-    consent_file.write_text("0", encoding="utf-8")
-
-    checker = OptInChecker()
-    assert checker.check(enable_opt_in_dialog=False) == ConsentCheckResult.DECLINED
-    telemetry = Telemetry(
-        app_name="ComparatorWorker",
-        app_version="0.1.0",
-        tid="G-DISABLED",
-        enable_opt_in_dialog=False,
-        disable_in_ci=True,
-    )
-    assert telemetry.consent is False
-    telemetry.send_event("test_category", "test_action", "test_label")
-    ```
-
-  - **Network & Security Boundaries:** Native compiler subprocesses are not network-isolated (persistent CI runners lack a Docker socket; execution-container orchestration is out of scope). Subprocess execution includes a Python `socket.connect` audit guard verifying zero connection attempts during compilation. Hostile native-code exploits or memory corruption remain explicitly out of scope pending isolated virtualization.
-  - **Remaining Implementation Gates:** Pin `openvino-telemetry==2025.2.0`, retain Proposed ADR status pending human legal/licensing review, enforce worker `sched_setaffinity` and memory limits, and configure strict mypy overrides for missing `py.typed`.
+  - **Opt-Out Verification:** `test_private_home_declines_telemetry_before_sdk_import`
+    in `backend/tests/test_compiler_worker.py` runs a disposable subprocess,
+    checks actual consent, sends a disabled synthetic event, and compiles a
+    generated model under a Python connection-attempt guard. HOME and opt-out
+    are configured before importing either SDK or telemetry; real developer
+    settings are never changed.
+  - **Network & Security Boundaries:** Native compiler subprocesses are not network-isolated (persistent CI runners lack a Docker socket; execution-container orchestration is out of scope). A separate smoke probe uses a Python `socket.connect` audit guard to detect Python connection attempts during compilation; it is not a production/native-network boundary. Hostile native-code exploits or memory corruption remain explicitly out of scope pending isolated virtualization.
+  - **Implementation Gates:** The implementation pins telemetry 2025.2.0 and enforces worker affinity/resource bounds. Proposed ADR status and independent human legal/licensing review remain unchanged. Narrow reviewed SDK stubs preserve strict typing without blanket import suppression.
 - **Unresolved Licensing Gates:** Evaluating third-party models (e.g., Depth Anything 3 variants licensed under CC-BY-NC or custom terms) does not inherit Apache-2.0 rights. Public SaaS hosting, multi-tenant evaluation, or model redistribution requires separate legal approval, terms of service, and isolated sandbox review.
 
 ## 2. Compiler Evidence & Device Semantics
@@ -78,8 +56,8 @@
 - **Supported CPU Configuration:**
   - Note: CPU plugin supported properties does **not** include `COMPILATION_NUM_THREADS` (passing it raises `RuntimeError: unsupported property`).
   - Verified valid CPU configuration options:
-    `{"INFERENCE_PRECISION_HINT": "f32", "INFERENCE_NUM_THREADS": "1", "NUM_STREAMS": "1", "PERFORMANCE_HINT": "LATENCY"}`
-- **Typing Status (PEP 561):** The official wheel packages 99 `.pyi` type stubs under `openvino/`, but lacks a `py.typed` marker file. Under strict mypy, imports from `openvino` must use an explicit override (e.g., `ignore_missing_imports = true` or stub path configuration) until upstream includes `py.typed`.
+    `{"INFERENCE_PRECISION_HINT": "f32", "INFERENCE_NUM_THREADS": 1, "NUM_STREAMS": 1, "PERFORMANCE_HINT": "LATENCY"}`
+- **Typing Status (PEP 561):** The wheel packages 99 `.pyi` files but lacks `py.typed`, and its relevant stubs begin with `# type: ignore`, hiding exports even with `follow_untyped_imports`. The implementation uses only the small reviewed `backend/stubs/openvino/` surface, not blanket `ignore_missing_imports` or `Any`. Real integration tests exercise those signatures; opaque property/query outputs are validated at runtime.
 - **Process & Resource Isolation:** Rather than relying on invalid compiler thread properties, the worker subprocess restricts CPU consumption using child-only Linux `os.sched_setaffinity(0, {allowed_cpu})`. Memory and execution deadlines are enforced via `resource.setrlimit(resource.RLIMIT_AS, ...)` and subprocess timeouts, preserving unmodified exception diagnostics on failure.
 
 ## 4. Test Fixtures & Validation Lineage
@@ -94,8 +72,8 @@
 ## 5. Architectural Contrast (Gated Alternatives)
 
 - **NVIDIA TensorRT:** Unresolved gates include proprietary NVIDIA SLA/EULA acceptance, non-redistributable library components, and mandatory physical NVIDIA GPU hardware with CUDA drivers (host CPU compilation unavailable).
-- **Arm Ethos-U Vela:** Permissive Apache-2.0 compiler, but strictly limited to microNPU targets with int8 quantized TFLite intake; cannot ingest or compile arbitrary float ONNX models directly.
-- **Verdict:** OpenVINO CPU is the sole candidate meeting immediate local demo criteria: permissive Apache-2.0 license, headless Python 3.12 Linux x86_64 wheel, direct ONNX intake, and host CPU compilation without external hardware or proprietary credentials.
+- **Arm Ethos-U Vela:** Permissive compiler requiring its own TFLite/TOSA intake and supported quantization/target settings; it does not directly ingest arbitrary ONNX. That separate ingestion path is deferred, not classified as universally unsupported hardware.
+- **Verdict:** OpenVINO CPU is the selected local demo path: Apache-2.0 core, a pinned headless Python 3.12 Linux wheel, direct ONNX intake, and CPU compilation without additional hardware or proprietary credentials. This does not establish legal clearance for a hosted service.
 
 ## 6. Authoritative References
 

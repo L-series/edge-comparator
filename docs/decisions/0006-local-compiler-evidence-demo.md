@@ -78,7 +78,8 @@ claim or pretend that an unpersisted run exists.
 
 Each run records artifact hashes, original model SHA-256, requested and actual
 compiler package/build versions, SDK-reported CPU identity, OS/architecture/
-Python, compiler options, adapter source fingerprint, and dependency-lock hash.
+Python, exact worker argument vector, wall deadline, compiler options, adapter
+source fingerprint, and dependency-lock hash.
 Record a container digest only when genuinely known; otherwise record explicit
 unknown, never substitute a source commit or image tag. Hash a canonically
 serialized configuration manifest with defined ordering and unknown values;
@@ -167,7 +168,9 @@ The browser demo covers upload, real success/failure, raw diagnostics, restart h
 download hash verification, and deletion. Preserve `/api/inspect`; all strict tests,
 builds, browser checks, and both CI routes must pass. Missing prerequisites are not a pass.
 Exit with a live demo and focused reviewed/merged commits, not just this spike.
-Remaining milestone checks and human production/security/legal approvals are pending.
+Local backend, component, browser/restart and artifact-integrity gates now pass.
+Hosted/local-main CI confirmation and independent human production/security/legal
+approvals remain separate requirements; local success does not grant those approvals.
 
 ## References
 

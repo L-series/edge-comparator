@@ -1,8 +1,9 @@
 # Development and delivery
 
-This repository contains the local ONNX preflight discovery slice described by
-Proposed ADR-0005. `PLAN.md` defines the larger product; no vendor SDK execution
-or production deployment exists. The root Node package provides repository
+This repository contains the local ONNX preflight and real OpenVINO CPU
+compiler-evidence discovery slices described by Proposed ADR-0005/0006.
+`PLAN.md` defines the larger product; no inference or production deployment exists.
+The root Node package provides repository
 governance; application packages enforce their own language-specific gates.
 
 ## Local checks
@@ -43,6 +44,7 @@ uv run --frozen ruff check .
 uv run --frozen ruff format --check .
 uv run --frozen mypy src tests
 uv run --frozen pytest
+uv run --frozen pytest -m integration --no-cov --junitxml=reports/compiler-integration.xml
 uv build --no-sources
 ```
 
@@ -58,10 +60,12 @@ npm --prefix frontend exec -- playwright install chromium
 npm --prefix frontend run test:e2e
 ```
 
-Browser tests start their own loopback API and Vite servers; ports 8000 and 5173
-must be free. They generate a tiny ONNX model, verify the exact uploaded-byte hash,
-exercise failure/recovery and target filtering, and check WCAG accessibility with
-axe. The local CI image includes matching browser binaries and OS libraries;
+Browser tests own their loopback API process, isolated temporary evidence root,
+and Vite server; ports 8000 and 5173 must be free. They use generated ONNX models,
+verify hashes, exercise real compiler acceptance/rejection, restart the API to
+verify persistence, delete selected evidence, and check WCAG accessibility with
+axe. They never use the developer's retained-evidence directory.
+The local CI image includes matching browser binaries and OS libraries;
 hosted PRs install the pinned browser and also verify both Docker recipes.
 
 ## Architecture decision records
@@ -82,8 +86,16 @@ reviewers are responsible for that judgment.
 
 For every behavior change, record the test that failed for the intended reason
 before implementation and the same test passing afterward. Include integration
-tests for trust boundaries and user-facing flows; mock vendor execution in ordinary
-CI, but never relabel mock results as hardware evidence.
+tests for trust boundaries and user-facing flows. Mocks cover transport/storage
+failures, but the reviewed pinned OpenVINO adapter also has mandatory real SDK
+tests (`integration`) in ordinary CI. Missing SDKs cannot produce skipped-success
+results. These tests compile generated models; they do not execute inference or
+relabel mock results as hardware evidence.
+
+The SDK's shipped 2026.4 stubs disable their own exports. The small reviewed
+`backend/stubs/openvino/` surface preserves strict application typing without
+`Any` or import suppressions; runtime boundary values are validated and real SDK
+tests exercise those signatures. Update the stubs and tests with SDK changes.
 
 Every frontend component needs behavior/accessibility tests, including loading,
 empty, error, and keyboard behavior where applicable. Every backend feature needs

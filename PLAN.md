@@ -6,6 +6,17 @@ Start with NVIDIA TensorRT, Intel OpenVINO, and Arm Ethos-U Vela. Use ONNX and T
 
 Research basis: Public documentation, repositories, release information, and available license texts reviewed on September 22, 2026. This is a source-backed implementation plan, not the result of executing the SDKs or obtaining legal clearance. Unverified capabilities and contractual permissions are explicit gates below.
 
+Implementation update (2026-09-22): Proposed ADR-0005/0006 bound the first local
+demo: ONNX preflight, actual pinned OpenVINO CPU compilation, conservative
+success/rejection/inconclusive evidence, consented private retention, exact
+configuration identity, history, export and deletion. Generated CNN/custom-op
+fixtures exercise both outcomes. This is one compiler-backed discovery slice,
+not completion of phase 0 or the three-adapter MVP. TensorRT, Vela/TFLite,
+Depth Anything 3 artifacts, numerical validation, inference, measurements,
+production isolation/tenancy, and independent architecture/legal approvals remain
+outside the delivered demo. The research basis above remains unchanged; executed
+SDK findings are separately recorded in `docs/integrations/openvino.md`.
+
 ---
 
 ## 1. Product definition and scope
