@@ -1,4 +1,4 @@
-FROM node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+FROM node:26-bookworm-slim@sha256:582460f614631b59b824ac6020533b9bf339c7fdf3a6d7db31abb6b4065f0212
 
 WORKDIR /workspace
 COPY --chown=node:node package.json package-lock.json ./
