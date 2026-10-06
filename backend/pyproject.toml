@@ -11,7 +11,7 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi==0.141.1",
     "onnx==1.23.0",
-    "openvino==2026.4.0",
+    "openvino==2026.4.1",
     "openvino-telemetry==2025.2.0",
     "pydantic==2.13.5",
     "uvicorn==0.53.0",
